@@ -360,21 +360,26 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 				// Then - initialization for vector.
 				// Then - common stuff
 				{
-				// how many entries do we have...
-				unsigned int length = 1;
-				for ( const auto& c : s )
-					{
-					if ( c == separators.set_separator[0] )
-						length++;
-					}
+				std::string delim{separators.set_separator[0]};
+
+				// Trim any extra delimiters off the end of the string before splitting it. This
+				// fixes cases where the value is something like "1,2,3,".
+				auto trimmed = util::rtrim(s, delim);
+
+				// Split the string into parts and get the number of entries.
+				std::vector<std::string> entries;
+				if ( ! trimmed.empty() )
+					entries = util::split(trimmed, delim);
+				auto length = entries.size();
 
 				unsigned int pos = 0;
 				bool error = false;
 
-				if ( separators.empty_field.size() > 0 && s.compare(separators.empty_field) == 0 )
+				if ( separators.empty_field.size() > 0 &&
+				     trimmed.compare(separators.empty_field) == 0 )
 					length = 0;
 
-				if ( separators.empty_field.empty() && s.empty() )
+				if ( separators.empty_field.empty() && trimmed.empty() )
 					length = 0;
 
 				Value** lvals = new Value*[length];
@@ -382,13 +387,13 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 				if ( type == TYPE_TABLE )
 					{
 					val->val.set_val.vals = lvals;
-					val->val.set_val.size = length;
+					val->val.set_val.size = static_cast<bro_int_t>(length);
 					}
 
 				else if ( type == TYPE_VECTOR )
 					{
 					val->val.vector_val.vals = lvals;
-					val->val.vector_val.size = length;
+					val->val.vector_val.size = static_cast<bro_int_t>(length);
 					}
 
 				else
@@ -397,24 +402,8 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 				if ( length == 0 )
 					break; // empty
 
-				istringstream splitstream(s);
-				while ( splitstream )
+				for ( const auto& element : entries )
 					{
-					string element;
-
-					if ( ! getline(splitstream, element, separators.set_separator[0]) )
-						break;
-
-					if ( pos >= length )
-						{
-						GetThread()->Warning(GetThread()->Fmt(
-							"Internal error while parsing set. pos %d >= length %d."
-							" Element: %s",
-							pos, length, element.c_str()));
-						error = true;
-						break;
-						}
-
 					Value* newval = ParseValue(element, name, subtype);
 					if ( newval == nullptr )
 						{
@@ -424,14 +413,14 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 						}
 
 					lvals[pos] = newval;
-
 					pos++;
 					}
 
 				// Test if the string ends with a set_separator... or if the
 				// complete string is empty. In either of these cases we have
 				// to push an empty val on top of it.
-				if ( ! error && (s.empty() || *s.rbegin() == separators.set_separator[0]) )
+				if ( ! error &&
+				     (trimmed.empty() || *trimmed.rbegin() == separators.set_separator[0]) )
 					{
 					lvals[pos] = ParseValue("", name, subtype);
 					if ( lvals[pos] == nullptr )
@@ -459,8 +448,9 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 
 				if ( pos != length )
 					{
-					GetThread()->Warning(GetThread()->Fmt(
-						"Internal error while parsing set: did not find all elements: %s", start));
+					GetThread()->Warning(GetThread()->Fmt("Internal error while parsing set: did "
+					                                      "not find all elements (%d != %lu): %s",
+					                                      pos, length, start));
 					goto parse_error;
 					}
 
