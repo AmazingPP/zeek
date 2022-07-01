@@ -569,5 +569,92 @@ std::string json_escape_utf8(const std::string& val, bool escape_printable_contr
 std::string json_escape_utf8(const char* val, size_t val_size,
                              bool escape_printable_controls = true);
 
+/**
+ * Splits a string at all occurrences of a delimiter. Successive occurrences
+ * of the delimiter will be split into multiple pieces.
+ *
+ * \note This function is not UTF8-aware.
+ */
+template <typename T> std::vector<T> split(T s, const T& delim)
+	{
+	// If there's no delimiter, return a copy of the existing string.
+	if ( delim.empty() )
+		return {T(s)};
+
+	// If the delimiter won't fit in the string, just return a copy as well.
+	if ( s.size() < delim.size() )
+		return {T(s)};
+
+	std::vector<T> l;
+
+	const bool ends_in_delim = (s.substr(s.size() - delim.size()) == delim);
+
+	do
+		{
+		size_t p = s.find(delim);
+		l.push_back(s.substr(0, p));
+		if ( p == std::string::npos )
+			break;
+
+		s = s.substr(p + delim.size());
+		} while ( ! s.empty() );
+
+	if ( ends_in_delim )
+		l.emplace_back(T{});
+
+	return l;
+	}
+
+template <typename T, typename U = typename T::value_type*> std::vector<T> split(T s, const U delim)
+	{
+	return split(s, T(delim));
+	}
+
+inline std::vector<std::string> split(const char* s, const char* delim)
+	{
+	return split(std::string(s), std::string(delim));
+	}
+
+inline std::vector<std::wstring> split(const wchar_t* s, const wchar_t* delim)
+	{
+	return split(std::wstring(s), std::wstring(delim));
+	}
+
+/**
+ * Returns a string view with all trailing characters of a given set removed.
+ *
+ * \note This function is not UTF8-aware.
+ */
+inline std::string rtrim(const std::string& s, const std::string& chars) noexcept
+	{
+	auto p = [](size_t pos)
+	{
+		return pos != std::string::npos ? pos + 1 : 0;
+	}(s.find_last_not_of(chars));
+	return s.substr(0, p);
+	}
+
+/**
+ * Returns a string view with all leading characters of a given set removed.
+ *
+ * \note This function is not UTF8-aware.
+ */
+inline std::string ltrim(const std::string& s, const std::string& chars) noexcept
+	{
+	return s.substr(std::min(s.find_first_not_of(chars), s.size()));
+	return s;
+	}
+
+/**
+ * Returns a string view with all leading & trailing characters of a given
+ * set removed.
+ *
+ * \note This function is not UTF8-aware.
+ */
+inline std::string trim(const std::string& s, const std::string& chars) noexcept
+	{
+	return ltrim(rtrim(s, chars), chars);
+	}
+
 	} // namespace util
 	} // namespace zeek
