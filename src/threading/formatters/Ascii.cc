@@ -367,7 +367,7 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 				auto trimmed = util::rtrim(s, delim);
 
 				// Split the string into parts and get the number of entries.
-				std::vector<std::string> entries;
+				std::vector<std::string_view> entries;
 				if ( ! trimmed.empty() )
 					entries = util::split(trimmed, delim);
 				auto length = entries.size();
@@ -404,7 +404,7 @@ Value* Ascii::ParseValue(const string& s, const string& name, TypeTag type, Type
 
 				for ( const auto& element : entries )
 					{
-					Value* newval = ParseValue(element, name, subtype);
+					Value* newval = ParseValue(std::string(element), name, subtype);
 					if ( newval == nullptr )
 						{
 						GetThread()->Warning("Error while reading set or vector");

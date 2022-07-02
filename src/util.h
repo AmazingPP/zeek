@@ -621,11 +621,11 @@ inline std::vector<std::wstring> split(const wchar_t* s, const wchar_t* delim)
 	}
 
 /**
- * Returns a string view with all trailing characters of a given set removed.
+ * Returns a version of the provided string with all trailing characters of a given set removed.
  *
  * \note This function is not UTF8-aware.
  */
-inline std::string rtrim(const std::string& s, const std::string& chars) noexcept
+inline std::string_view rtrim(std::string_view s, std::string_view chars) noexcept
 	{
 	auto p = [](size_t pos)
 	{
@@ -635,23 +635,23 @@ inline std::string rtrim(const std::string& s, const std::string& chars) noexcep
 	}
 
 /**
- * Returns a string view with all leading characters of a given set removed.
+ * Returns a version of provided string with all leading characters of a given set removed.
  *
  * \note This function is not UTF8-aware.
  */
-inline std::string ltrim(const std::string& s, const std::string& chars) noexcept
+inline std::string_view ltrim(std::string_view s, std::string_view chars) noexcept
 	{
 	return s.substr(std::min(s.find_first_not_of(chars), s.size()));
 	return s;
 	}
 
 /**
- * Returns a string view with all leading & trailing characters of a given
+ * Returns a version of provided string with all leading & trailing characters of a given
  * set removed.
  *
  * \note This function is not UTF8-aware.
  */
-inline std::string trim(const std::string& s, const std::string& chars) noexcept
+inline std::string_view trim(std::string_view s, std::string_view chars) noexcept
 	{
 	return ltrim(rtrim(s, chars), chars);
 	}
