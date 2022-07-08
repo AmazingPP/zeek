@@ -2051,8 +2051,8 @@ void Manager::PrepareForwarding(const std::string& name)
 void Manager::SetMetricsExportInterval(double value)
 	{
 	broker::timespan ts;
-	if ( broker::convert(value, ts) )
-		bstate->endpoint.metrics_exporter().set_interval(ts);
+	broker::convert(value, ts);
+	bstate->endpoint.metrics_exporter().set_interval(ts);
 	}
 
 void Manager::SetMetricsExportTopic(std::string value)
